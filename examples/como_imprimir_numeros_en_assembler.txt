@@ -1,0 +1,87 @@
+; --- SECCIÓN .DATA ---
+.DATA
+    buffer      db 6 dup ('$') ; Buffer para almacenar hasta 5 dígitos + el terminador '$'
+                               ; '6 dup ($)' reserva 6 bytes e inicializa con '$'.
+                               ; Esto es para números hasta 65535 (5 dígitos).
+                               ; Si esperas números más grandes (32 bits), necesitarás más espacio.
+
+; --- SECCIÓN .CODE ---
+.CODE
+.STARTUP ; Si estás en modelo TINY
+
+    ; Suponiendo que el número que quieres imprimir está en AX
+    ; Por ejemplo, carguemos 12345 para demostrar
+    mov ax, 12345
+
+    ; --- INICIO DE LA RUTINA DE CONVERSIÓN ---
+    ; Registros a usar:
+    ; AX: Contiene el número que estamos convirtiendo (dividendo).
+    ; CX: Contador de dígitos (cuántos dígitos hemos obtenido).
+    ; BX: Divisor (siempre 10 para decimal).
+    ; DX: Residuos de la división (los dígitos).
+    ; DI: Puntero para escribir en el buffer.
+
+    mov cx, 0       ; Inicializar el contador de dígitos a 0
+    mov bx, 10      ; El divisor es 10 (para base decimal)
+
+  convert_loop:
+    xor dx, dx      ; Limpiar DX. ¡Importante! DIV usa DX:AX como dividendo (32 bits),
+                    ; así que DX debe ser 0 si tu número es de 16 bits en AX.
+    div bx          ; Divide AX por BX.
+                    ; Resultado: AX = cociente (AX / 10)
+                    ;            DX = residuo (AX % 10), este es el dígito
+
+    push dx         ; Empujar el dígito (el residuo) a la pila.
+                    ; Lo hacemos porque obtenemos los dígitos en orden inverso (unidades, decenas...).
+                    ; La pila (LIFO) nos ayudará a recuperarlos en el orden correcto.
+
+    inc cx          ; Incrementar el contador de dígitos.
+                    ; Esto nos dice cuántos POPs tendremos que hacer más tarde.
+
+    cmp ax, 0       ; Comparar el cociente (AX) con 0.
+    jne convert_loop ; Si AX no es cero, significa que todavía hay dígitos por procesar.
+                    ; Volver al inicio del bucle.
+
+    ; --- FIN DE LA CONVERSIÓN, INICIO DE LA CONVERSIÓN A ASCII Y ALMACENAMIENTO ---
+    ; Ahora, los dígitos están en la pila en orden inverso.
+    ; Los sacamos de la pila, los convertimos a ASCII y los guardamos en el buffer.
+
+    lea di, buffer 	  ; Cargar la dirección (offset) de `buffer` en DI.
+                          ; DI será nuestro puntero para escribir en el `buffer`.
+
+  print_loop:
+    pop dx          ; Sacar un dígito de la pila (en el orden correcto ahora).
+                    ; Por ejemplo, para 12345, el primer POP será el '1'.
+
+    add dl, '0'     ; Convertir el dígito numérico a su carácter ASCII.
+                    ; '0' en ASCII es 30h. Si DL tiene 5, se convierte a 35h (ASCII '5').
+                    ; Se usa DL porque el dígito está en la parte baja de DX.
+
+    mov [di], dl    ; Mover el carácter ASCII resultante al buffer en la posición apuntada por DI.
+                    ; [di] significa "el contenido de la memoria en la dirección DI".
+
+    inc di          ; Incrementar DI para apuntar a la siguiente posición libre en el buffer.
+
+    loop print_loop ; `LOOP` es una instrucción especial:
+                    ; 1. Decrementa CX en 1.
+                    ; 2. Si CX no es cero, salta a la etiqueta `print_loop`.
+                    ; Esto se repetirá `CX` veces, asegurando que todos los dígitos se procesen.
+
+    mov byte ptr [di], '$' ; Poner el terminador '$' al final de la cadena en el buffer.
+                           ; `byte ptr` es un "override" para indicar que estamos escribiendo un byte,
+                           ; ya que [di] por sí solo podría ser ambiguo para el ensamblador.
+
+    ; --- FIN DE LA CONVERSIÓN Y ALMACENAMIENTO, INICIO DE LA IMPRESIÓN ---
+
+    mov ah, 09h     ; Cargar la función de imprimir string (interrupción 21h, subfunción 09h).
+    lea dx, buffer  ; Cargar la dirección (offset) de tu cadena (el buffer) en DX.
+                    ; DS ya apunta al segmento de datos en el modelo TINY.
+
+    int 21h         ; Llamar a la interrupción de DOS para que imprima la cadena.
+
+    ; --- FIN DE LA RUTINA DE IMPRESIÓN DEL NÚMERO ---
+
+    ; ... resto de tu código o salida del programa ...
+    mov ah, 4Ch
+    int 21h
+.END
