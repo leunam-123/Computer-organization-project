@@ -24,14 +24,14 @@
     end_message db 'Thanks for you use the program!$' 
     
     ; table
-    m dw 3,1,2,3,4,5,6,7
-      dw 8,9,10,11,12,13,14,15
-      dw 16,17,18,19,20,21,22,23 
-      dw 24,25,26,27,28,29,30,31
-      dw 32,33,34,35,36,37,38,39
-      dw 40,41,42,43,44,45,46,47
-      dw 48,49,50,51,52,53,54,55
-      dw 56,57,58,59,60,61,62,63
+    m dw 0,1,2,3,0,0,0,0
+      dw 4,5,6,7,0,0,0,0
+      dw 8,9,10,11,0,0,0,0
+      dw 12,13,14,15,0,0,0,0
+      dw 0,0,0,0,0,0,0,0
+      dw 0,0,0,0,0,0,0,0
+      dw 0,0,0,0,0,0,0,0
+      dw 0,0,0,0,0,0,0,0
 
 .code
 .startup
@@ -54,16 +54,20 @@
                       cmp di,l;
                       je if; if di == n go to if
                         inc di; di <- di + 1
+                        inc di; di <- di + 1
                         jmp else;
                         if: inc bx; bx <- bx + 1
+                            inc bx; bx <- bx + 1
                             mov di,0; di <- 0    
                             
                             mov ah, 09h
                             lea dx, jump_line
-                            int 21h     
+                            int 21h
                             
                         else: cmp bx, n;
                               jb while; if bx<l go to while
+    mov position,2
+    jmp endProgram;
                               
 ;----------------Movement and Printing of Matrix by Columns----------------
 ;------------------------------GRECIA APELLIDO-----------------------------
@@ -72,13 +76,13 @@
               lea dx, jump_line
               int 21h
    
-              mov ah, 09h
-              lea dx, end_message
-              int 21h 
+              ;mov ah, 09h
+              ;lea dx, end_message
+              ;int 21h 
                
                 
-              mov ah, 4Ch
-              int 21h 
+              ;mov ah, 4Ch
+              ;int 21h 
 
 
 
@@ -93,13 +97,13 @@
               lea dx, jump_line
               int 21h
    
-              mov ah, 09h
-              lea dx, end_message
-              int 21h 
+              ;mov ah, 09h
+              ;lea dx, end_message
+              ;int 21h 
                
                 
-              mov ah, 4Ch
-              int 21h
+              ;mov ah, 4Ch
+              ;int 21h
 
 
 
@@ -162,21 +166,20 @@
                                           ;DS ya apunta al segmento de datos en el modelo TINY.
 
              int 21h
-             cmp position,2               
-             je  continue2 
-             cmp position,3
-             je  continue3
+             ;cmp position,2               
+             ;je  continue2 
+             ;cmp position,3
+             ;je  continue3
              jmp continue1    
 ;----------------------------End of program-----------------------------     
-
-    ;mov ah, 09h
-    ;lea dx, jump_line
-    ;int 21h
-   
-    ;mov ah, 09h
-    ;lea dx, end_message
-    ;int 21h 
-   
-    
-    ;mov ah, 4Ch
-    ;int 21h
+    endProgram:;mov ah, 09h
+        ;lea dx, jump_line
+        ;int 21h
+       
+        ;mov ah, 09h
+        ;lea dx, end_message
+        ;int 21h 
+       
+        
+        ;mov ah, 4Ch
+        ;int 21h
