@@ -6,9 +6,13 @@
     
     l dw 0;
     
+    l2 dw 0;
+    
     x dw 0;
     
     y dw 0;
+    
+    max dw 16;
     
     position dw 1
     
@@ -35,12 +39,28 @@
 
 .code
 .startup
+;----------------Finding limits of movement----------------
+
+    ;with this instructions we find the limit of the columns 
+    ;in bits according to the dimention of the matrix
+    mov ax,n; ax <- n
+    mov bx,2; cx <- 2 
+    mul bx; ax <- n*2
+    mov l2, ax; l2 <- 16-n*2
+    dec l2; l2 <- l2-1
+    dec l2; l2 <- l2-1
+    
+    ;with this instructions we find the limit of the rows 
+    ;in bits according to the dimention of the matrix
+    mov bx,max;
+    mov ax,n;
+    mul bx;
+    mov l,ax; l <- n*16
+    
 ;----------------Moving and Printing Matrix by Rows----------------
 ;-------------------------SOFIA MORENO-----------------------------
 
-    mov ax,n; ax <- n
-    sub ax,1; ax <- n-1
-    mov l,ax; l <- n-1
+    ;reinicializacion
     mov ax,0; ax <- 0 
     mov bx,0; bx <- 0
     mov di,0; di <- 0
@@ -51,21 +71,20 @@
            jmp printing;
            continue1: mov bx,x;
                       mov di,y;
-                      cmp di,l;
-                      je if; if di == n go to if
+                      cmp di,l2;
+                      je if; if di < l go to if
                         inc di; di <- di + 1
                         inc di; di <- di + 1
                         jmp else;
-                        if: inc bx; bx <- bx + 1
-                            inc bx; bx <- bx + 1
+                        if: add bx,max;
                             mov di,0; di <- 0    
                             
                             mov ah, 09h
                             lea dx, jump_line
                             int 21h
                             
-                        else: cmp bx, n;
-                              jb while; if bx<l go to while
+                        else: cmp bx, l;
+                              jb while; if bx<l2 go to while
     mov position,2
     jmp endProgram;
                               
@@ -172,14 +191,14 @@
              ;je  continue3
              jmp continue1    
 ;----------------------------End of program-----------------------------     
-    endProgram:;mov ah, 09h
-        ;lea dx, jump_line
-        ;int 21h
+    endProgram:mov ah, 09h
+               lea dx, jump_line
+               int 21h
        
-        ;mov ah, 09h
-        ;lea dx, end_message
-        ;int 21h 
+        mov ah, 09h
+        lea dx, end_message
+        int 21h 
        
         
-        ;mov ah, 4Ch
-        ;int 21h
+        mov ah, 4Ch
+        int 21h
