@@ -20,11 +20,16 @@
                             ; '6 dup ($)' reserves 6 bytes and initializes with '$'.
                             ; This is for numbers up to 65535 (5 digits). 
                             
-    eco_message     db 'Press a key to continue' ;Wait for an entry to continue
-    row_message  db 'Rows matrix printing:'   
-    colum_message  db 'Column matrix printing:'
-    zigzag_message  db 'Zigzag matrix printing:'
-    jump_line   db 0Dh, 0Ah, '$'
+    press_message     db 'Press a key to continue$' ;Wait for an entry to continue
+    
+    row_message  db 'Rows matrix printing:$'  
+                                                 
+    colum_message  db 'Column matrix printing:$' 
+    
+    zigzag_message  db 'Zigzag matrix printing:$'  
+    
+    jump_line   db 0Dh, 0Ah, '$'                    
+    
     end_message db 'Thanks for you use the program!$' 
     
     ; table
@@ -35,12 +40,26 @@
       dw 0,0,0,0,0,0,0,0
       dw 0,0,0,0,0,0,0,0
       dw 0,0,0,0,0,0,0,0
-      dw 0,0,0,0,0,0,0,0
+      dw 0,0,0,0,0,0,0,0       
+      
+      
 
 .code
 .startup
-;----------------Finding limits of movement----------------
-
+;----------------Finding limits of movement----------------------
+      
+    mov ah, 09h          ;Load the function to print characters
+    lea dx, row_message
+    int 21h              ;Call DOS interrupt to print the string.
+      
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+    
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h       
+    
     ;with this instructions we find the limit of the columns 
     ;in bits according to the dimention of the matrix
     mov ax,n; ax <- n
@@ -57,8 +76,8 @@
     mul bx;
     mov l,ax; l <- n*16
     
-;----------------Moving and Printing Matrix by Rows----------------
-;-------------------------SOFIA MORENO-----------------------------
+;----------------Moving and Printing Matrix by Rows--------------
+;-------------------------SOFIA MORENO---------------------------
 
     ;reinicializacion
     mov ax,0; ax <- 0 
@@ -67,138 +86,161 @@
     
     while: mov ax,m[bx][di]; ax <- m[bx][di]
            mov x,bx;
-           mov y,di;
-           jmp printing;
-           continue1: mov bx,x;
-                      mov di,y;
-                      cmp di,l2;
-                      je if; if di < l go to if
-                        inc di; di <- di + 1
-                        inc di; di <- di + 1
-                        jmp else;
-                        if: add bx,max;
-                            mov di,0; di <- 0    
+           mov y,di;  
+           
+           call printing; 
+           
+           mov bx,x;
+           mov di,y;
+           cmp di,l2;
+           je if; if di < l go to if
+           inc di; di <- di + 1
+           inc di; di <- di + 1
+           jmp else;
+           if: add bx,max;
+           mov di,0; di <- 0    
                             
-                            mov ah, 09h
-                            lea dx, jump_line
-                            int 21h
+           mov ah, 09h
+           lea dx, jump_line
+           int 21h
                             
-                        else: cmp bx, l;
-                              jb while; if bx<l2 go to while
-    mov position,2
-    jmp endProgram;
+           else: cmp bx, l;
+                 jb while; if bx<l2 go to while
+  
+           call delay
                               
-;----------------Movement and Printing of Matrix by Columns----------------
-;------------------------------GRECIA APELLIDO-----------------------------
-    continue2:mov position,2
-              mov ah, 09h
-              lea dx, jump_line
-              int 21h
+;----------------Movement and Printing of Matrix by Columns------
+;------------------------------GRECIA APELLIDO-------------------
+           
+           mov ah, 09h
+           lea dx, jump_line
+           int 21h
+              
+           mov ah, 09h
+           lea dx, colum_message
+           int 21h  
+      
+           mov ah, 09h
+           lea dx, jump_line
+           int 21h
+            
+           mov ah, 09h
+           lea dx, jump_line
+           int 21h
+                      
    
-              ;mov ah, 09h
-              ;lea dx, end_message
-              ;int 21h 
-               
-                
-              ;mov ah, 4Ch
-              ;int 21h 
+            
 
 
 
 
 
+           jmp end_program
 
-
-;----------------Zigzag Matrix Movement and Printing----------------------
-;------------------------------MANUEL ANTIAS------------------------------
-    continue3:mov position,3
-              mov ah, 09h
-              lea dx, jump_line
-              int 21h
+;----------------Zigzag Matrix Movement and Printing-------------
+;------------------------------MANUEL ANTIAS---------------------
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+              
+    mov ah, 09h
+    lea dx, colum_message
+    int 21h  
+      
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+            
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
    
-              ;mov ah, 09h
-              ;lea dx, end_message
-              ;int 21h 
-               
-                
-              ;mov ah, 4Ch
-              ;int 21h
 
 
 
-;----------------------------Code of Printing-----------------------------
+;----------------------------Code of Printing--------------------------------------
 
-    ;---------Separating of the digit-------- 
+    ;--------------------Separating of the digit----------------------------------- 
     
     
     
             
-    printing:mov cx, 0                   ; Inicializar el contador de digitos a 0.
-             mov bx, 10                  ; El divisor es 10 (para base decimal).
+    printing:mov cx, 0                   
+             mov bx, 10                  ; We will use bx to store the divisor.
     
-             separation_cycle:mov dx,0       ;Mantenemos dx limpio.
-                              div bx     ;ax/bx.
-                                ;ax=Cociente (ax/10).
-                                ;ax=Resto (ax%10), este es el digito. 
-                            
-                              push dx    ;Empuja el digito a la pila del sistema.
-                                ;La pila (LIFO) nos ayuda a recuperar numeros en el orden correcto.
-                            
+             separation_cycle:mov dx,0   ;We keep dx clean.
+                              div bx     ;ax has the quotient and dx the remainder.
+                              push dx    ;We push the digit onto the system stack.
                               inc cx     ;cx<-cx+1.
-                                ;Esto nos dice cuantos POPs se tendran que hacer.
-                            
-                              cmp ax,0   ; Comparar el cociente (ax) con 0.        
-                     
-                              jne separation_cycle   ;Si ax!=0, significa que aun hay digitos por procesar
-                                                     ;y volvemos al ciclo de separacion.
+                              cmp ax,0        
+                              jne separation_cycle   ;If ax!=0, return to the cycle.
+                  
 
-             ;---Inicio de la conversion a ASCII y almacenamiento------------------------------------------       
+    ;-------------Start of conversion to ASCII and storage------------------------------------------------------       
 
              
     
-             lea di,buffer               ;Carga la direccion (offset) de `buffer` en DI.
-                                         ;DI sera nuestro puntero para escribir en el `buffer`.
+             lea di,buffer               ;Loads the address (offset) of `buffer` into DI.
                                 
-             ascci_cycle:pop dx          ;Saca un digito de la pila (LIFO).
-    
-                         add dl,'0'      ;Convierte el numero a su caracter ASCII.
-                                         ;'0' es 30h. Si DL tiene 5, se convierte a 35h (ASCII '5').
-                                         ;Se usa DL porque el dígito está en la parte baja de DX.
-                                
-                         mov [di], dl    ;Mover el carácter ASCII resultante al buffer en la posicion apuntada. 
-                                         ;por DI.
-                                
+             ascci_cycle:pop dx          ;We take a digit from the stack (LIFO).
+                         add dl,'0'      ;We convert the number to its ASCII character.
+                         mov [di], dl    ;We move the resulting ASCII character to the buffer at position di. 
                          inc di          ;Incrementa DI para apuntar a la siguiente posicion libre en el buffer. 
                 
                 
-             loop ascci_cycle            ;Decrementa CX en 1.Si CX no es cero, salta a la etiqueta `print_loop`. 
+             loop ascci_cycle            ;Decrement cx by 1. If cx!=0, return to `print_loop`. 
  
 
-             mov byte ptr [di], ' '       ;Coloca un espacio en blanco ' ' al final de la cadena en el buffer.
-                                          ;`byte ptr` es un "override" para indicar que estamos escribiendo un byte,
-                                          ;ya que [di] por si solo podria ser ambiguo para el ensamblador.
+             mov byte ptr [di], ' '      ;We put a blank space ' ' at the end of the string in the buffer.
 
-             ;---Inicio de la impresion------------------------------------------------------------------------
+    ;-----------------------------Start of printing-------------------------------------------------------------
 
-             mov ah, 09h                  ;Carga la funcion de imprimir string (interrupcion 21h,subfuncion 09h).
-             lea dx, buffer               ;carga la direccion (offset) de la cadena (el buffer) en DX.
-                                          ;DS ya apunta al segmento de datos en el modelo TINY.
+             mov ah, 09h                  
+             lea dx, buffer              ;loads the address (offset) of the string (the buffer) into dx.
+                                          
 
              int 21h
-             ;cmp position,2               
-             ;je  continue2 
-             ;cmp position,3
-             ;je  continue3
-             jmp continue1    
-;----------------------------End of program-----------------------------     
-    endProgram:mov ah, 09h
-               lea dx, jump_line
-               int 21h
+             ret                         ;We put a return in the code to call it in different instances
+             
+;----------------------------Delay of program----------------------------- -------------------------------------
        
-        mov ah, 09h
-        lea dx, end_message
-        int 21h 
+    ;Here we define a delay of 2,000,000 microseconds (2 seconds) (1E8480h in hexadecimal)
        
-        
-        mov ah, 4Ch
-        int 21h
+    delay:mov cx, 1Eh                    ;We save the high part of the time in hexadecimal.
+          mov dx, 8480h                  ;We save the lower part of the time in hexadecimal.
+          mov ah, 86h                    ;This instruction expects a time value in microseconds.
+          int 15h                        ;This is the instruction that triggers the BIOS function call.
+          
+          mov dx,0
+          mov ax,0                       
+          ret                            ;We put a return in the code to call it in different instances           
+
+   
+;----------------------------End of program---------------------------------------------------------------------
+     
+    end_program:mov ah, 09h
+                lea dx, jump_line
+                int 21h
+       
+                mov ah, 09h
+                lea dx, press_message    ;Message waiting for keyboard input
+                int 21h
+                                         
+                mov ah, 01h              ;Function to read a character from the keyboard
+                int 21h         
+               
+                mov ah, 09h
+                lea dx, jump_line
+                int 21h   
+               
+                mov ah, 09h
+                lea dx, jump_line
+                int 21h
+   
+                mov ah, 09h
+                lea dx, end_message
+                int 21h 
+   
+    
+                mov ah, 4Ch              ;completion of the program
+                int 21h
