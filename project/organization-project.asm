@@ -110,7 +110,7 @@
            call delay
                               
 ;----------------Movement and Printing of Matrix by Columns------
-;------------------------------GRECIA APELLIDO-------------------
+;------------------------------GRECIA LOPEZ-------------------
            
            mov ah, 09h
            lea dx, jump_line
@@ -204,10 +204,10 @@
              
 ;----------------------------Delay of program----------------------------- -------------------------------------
        
-    ;Here we define a delay of 2,000,000 microseconds (2 seconds) (1E8480h in hexadecimal)
+    ;Here we define a delay of 1,000,000 microseconds (1 second) (0F4240h in hexadecimal)
        
-    delay:mov cx, 1Eh                    ;We save the high part of the time in hexadecimal.
-          mov dx, 8480h                  ;We save the lower part of the time in hexadecimal.
+    delay:mov cx, 0Fh                    ;We save the high part of the time in hexadecimal.
+          mov dx, 4240h                  ;We save the lower part of the time in hexadecimal.
           mov ah, 86h                    ;This instruction expects a time value in microseconds.
           int 15h                        ;This is the instruction that triggers the BIOS function call.
           
