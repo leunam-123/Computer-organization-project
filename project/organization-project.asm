@@ -8,13 +8,18 @@
     
     l2 dw 0;
     
+    l3 dw 0;
+    
     x dw 0;
     
     y dw 0;
     
+    cant dw 0;
+    
+    direction dw 0;
+    
     max dw 16;
     
-    position dw 1
     
     buffer  db 6 dup ('$')  ; Buffer to store up to 5 digits + the '$' terminator
                             ; '6 dup ($)' reserves 6 bytes and initializes with '$'.
@@ -46,19 +51,7 @@
 
 .code
 .startup
-;----------------Finding limits of movement----------------------
-      
-    mov ah, 09h          ;Load the function to print characters
-    lea dx, row_message
-    int 21h              ;Call DOS interrupt to print the string.
-      
-    mov ah, 09h
-    lea dx, jump_line
-    int 21h
-    
-    mov ah, 09h
-    lea dx, jump_line
-    int 21h       
+;----------------Finding limits of movement----------------------           
     
     ;with this instructions we find the limit of the columns 
     ;in bits according to the dimention of the matrix
@@ -78,7 +71,19 @@
     
 ;----------------Moving and Printing Matrix by Rows--------------
 ;-------------------------SOFIA MORENO---------------------------
-
+    
+    mov ah, 09h          ;Load the function to print characters
+    lea dx, row_message
+    int 21h              ;Call DOS interrupt to print the string.
+      
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+    
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+    
     ;reinicializacion
     mov ax,0; ax <- 0 
     mov bx,0; bx <- 0
@@ -135,7 +140,7 @@
 
 
 
-           jmp end_program
+           
 
 ;----------------Zigzag Matrix Movement and Printing-------------
 ;------------------------------MANUEL ANTIAS---------------------
@@ -144,7 +149,7 @@
     int 21h
               
     mov ah, 09h
-    lea dx, colum_message
+    lea dx, zigzag_message
     int 21h  
       
     mov ah, 09h
@@ -154,10 +159,98 @@
     mov ah, 09h
     lea dx, jump_line
     int 21h
-   
+    
+    ;reinicializacion
+    mov ax,n;
+    mul n;
+    mov l3,ax;
+    mov ax,0; ax <- 0 
+    mov bx,0; bx <- 0
+    mov di,0; di <- 0
+    mov x,0;
+    mov y,0;
+    mov direction,1;
+    
+    whileZigZag: mov ax,m[bx][di]; ax <- m[bx][di]
+                 mov x,bx;
+                 mov y,di;  
+                   
+                 call printing;
+                 
+                 inc cant;
+                 
+                 mov bx,x;
+                 mov di,y;
+                 
+                 cmp direction,0;
+                 je ifZigZag;
+                 
+                 cmp di,0;
+                 je leftBotton;
+                 mov ax,bx;
+                 div l;
+                 cmp dx,0;
+                 je leftBotton;
+                 jmp change1;
+                 
+                 leftBotton:mov ah, 09h
+                            lea dx, jump_line
+                            int 21h
+                            
+                            mov direction,0;
+                            
+                            mov ax,bx;
+                            div l;
+                            cmp dx,0;
+                            jne left;
+                            inc di;
+                            inc di;
+                            jmp endZigZag;
+                            left: add bx,max;
+                            jmp endZigZag;
+                            
+                 
+                 change1: add bx,max;
+                          dec di;
+                          dec di;
+                          jmp endZigZag;
+                  
+                 
+                 ifZigZag: mov ax,bx;
+                           div max;
+                           cmp dx,0;
+                           je rightTop;
+                           cmp di,l2;
+                           je rightTop;
+                           jmp change2;
+                         
+                           rightTop:mov ah, 09h
+                                    lea dx, jump_line
+                                    int 21h
+                                  
+                                    mov direction, 1;
+                                  
+                                    cmp di,l;
+                                    jne right;
+                                    add bx,max;
+                                    jmp endZigZag;
+                                    right: inc di;
+                                           inc di;
+                                    jmp endZigZag;
+                         
+                           change2: sub bx,max;
+                                    inc di;
+                                    inc di  
+                           
+                 endZigZag: mov ax,cant;
+                            cmp ax,l3;
+                            jb whileZigZag;
 
 
-
+    call delay
+    
+    jmp end_program
+    
 ;----------------------------Code of Printing--------------------------------------
 
     ;--------------------Separating of the digit----------------------------------- 
