@@ -112,24 +112,52 @@
 ;----------------Movement and Printing of Matrix by Columns------
 ;------------------------------GRECIA LOPEZ-------------------
            
-           mov ah, 09h
-           lea dx, jump_line
-           int 21h
-              
-           mov ah, 09h
-           lea dx, colum_message
-           int 21h  
-      
-           mov ah, 09h
-           lea dx, jump_line
-           int 21h
-            
-           mov ah, 09h
-           lea dx, jump_line
-           int 21h
-                      
-   
-            
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+
+    mov ah, 09h
+    lea dx, colum_message
+    int 21h  
+
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+
+    mov ah, 09h
+    lea dx, jump_line
+    int 21h
+
+    ; Initialize column counter
+    mov di, 0              ; Start with column 0
+
+    whileC:
+        mov bx, 0          ; Start with row 0
+    
+        whileF:
+            mov ax, m[bx][di]  ; ax <- m[bx][di]
+            mov x,bx           ; Save current position
+            mov y,di
+            call printing      
+        
+            mov bx,x           ; Restore position
+            mov di,y
+            add bx, max        ; bx <- bx + 16 Move to the next row
+            cmp bx, l          ; Check if it is the end of the column
+            jb whileF          ; 
+
+        ; Continue if I do not finish the column
+        mov ah, 09h
+        lea dx, jump_line
+        int 21h
+    
+        inc di                 ; Move to the next column
+        inc di                 ; 
+        cmp di, l2             ; Check if it is the end of the array
+        jbe whileC             ; Continue if I don't finish
+
+       call delay
+
 
 
 
