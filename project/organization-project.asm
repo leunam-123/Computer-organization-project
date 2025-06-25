@@ -1,4 +1,10 @@
-.model tiny
+.model tiny 
+; CATEDRA: ORGANIZACION DEL COMPUTADOR
+; PROFESOR: OMAR HERNANDEZ
+
+; ANTIAS, MANUEL CI.31.108.866
+; MORENO, SOFIA  CI.31.448.315
+; LOPEZ , GRECIA CI.30.908.067
 
 .data   
 
@@ -38,10 +44,10 @@
     end_message db 'Thanks for you use the program!$' 
     
     ; table
-    m dw 0,1,2,3,0,0,0,0
-      dw 4,5,6,7,0,0,0,0
-      dw 8,9,10,11,0,0,0,0
-      dw 12,13,14,15,0,0,0,0
+    m dw 6,12,15,1,0,0,0,0
+      dw 5,13,16,2,0,0,0,0
+      dw 7,14,17,3,0,0,0,0
+      dw 5,15,18,4,0,0,0,0
       dw 0,0,0,0,0,0,0,0
       dw 0,0,0,0,0,0,0,0
       dw 0,0,0,0,0,0,0,0
@@ -58,7 +64,7 @@
     mov ax,n; ax <- n
     mov bx,2; cx <- 2 
     mul bx; ax <- n*2
-    mov l2, ax; l2 <- 16-n*2
+    mov l2, ax; l2 <- n*2
     dec l2; l2 <- l2-1
     dec l2; l2 <- l2-1
     
@@ -90,15 +96,15 @@
     mov di,0; di <- 0
     
     while: mov ax,m[bx][di]; ax <- m[bx][di]
-           mov x,bx;
+           mov x,bx; Save current position
            mov y,di;  
            
            call printing; 
            
-           mov bx,x;
+           mov bx,x; Restore position
            mov di,y;
            cmp di,l2;
-           je if; if di < l go to if
+           je if; if di == l2 go to if
            inc di; di <- di + 1
            inc di; di <- di + 1
            jmp else;
@@ -110,7 +116,7 @@
            int 21h
                             
            else: cmp bx, l;
-                 jb while; if bx<l2 go to while
+                 jb while; if bx<l go to while
   
            call delay
                               
@@ -170,8 +176,8 @@
 
            
 
-;----------------Zigzag Matrix Movement and Printing-------------
-;------------------------------MANUEL ANTIAS---------------------
+;----------------Zigzag Matrix Movement and Printing----------------------------
+;------------------------------SOFIA MORENO & MANUEL ANTIAS---------------------
     mov ah, 09h
     lea dx, jump_line
     int 21h
@@ -188,10 +194,14 @@
     lea dx, jump_line
     int 21h
     
-    ;reinicializacion
     mov ax,n;
     mul n;
-    mov l3,ax;
+    mov l3,ax;number of elements to be printed
+    mov ax,l;
+    sub ax,max; lower limit of the matrix
+    mov l,ax;
+    
+    ;reinicialization
     mov ax,0; ax <- 0 
     mov bx,0; bx <- 0
     mov di,0; di <- 0
@@ -200,24 +210,24 @@
     mov direction,1;
     
     whileZigZag: mov ax,m[bx][di]; ax <- m[bx][di]
-                 mov x,bx;
+                 mov x,bx; Save current position
                  mov y,di;  
                    
                  call printing;
                  
-                 inc cant;
+                 inc cant; we increased the amount of printed values
                  
-                 mov bx,x;
+                 mov bx,x; Restore position
                  mov di,y;
                  
+                 ;comparing the address to know which block to go to
                  cmp direction,0;
                  je ifZigZag;
                  
+                 ;Comparisons to determine whether to enter leftBottom or change1
                  cmp di,0;
                  je leftBotton;
-                 mov ax,bx;
-                 div l;
-                 cmp dx,0;
+                 cmp bx,l;
                  je leftBotton;
                  jmp change1;
                  
@@ -225,28 +235,27 @@
                             lea dx, jump_line
                             int 21h
                             
-                            mov direction,0;
+                            mov direction,0; change of direction
                             
-                            mov ax,bx;
-                            div l;
-                            cmp dx,0;
-                            jne left;
+                            ;comparison to know if we should go down by adding 16 bits to bx 
+                            ;or if we should go to the right by adding 2 bits to di
+                            cmp bx,l;
+                            jb left;
                             inc di;
                             inc di;
                             jmp endZigZag;
                             left: add bx,max;
                             jmp endZigZag;
                             
-                 
+                 ;With this block we make the diagonal movement downwards
                  change1: add bx,max;
                           dec di;
                           dec di;
                           jmp endZigZag;
                   
                  
-                 ifZigZag: mov ax,bx;
-                           div max;
-                           cmp dx,0;
+                 ifZigZag: ;Comparisons to determine whether to enter rightTop or change2
+                           cmp bx,0;
                            je rightTop;
                            cmp di,l2;
                            je rightTop;
@@ -256,20 +265,26 @@
                                     lea dx, jump_line
                                     int 21h
                                   
-                                    mov direction, 1;
-                                  
-                                    cmp di,l;
-                                    jne right;
-                                    add bx,max;
-                                    jmp endZigZag;
+                                    mov direction, 1; change of direction
+                                    
+                                    ;comparison to know if we should go down by adding 16 bits 
+                                    ;to bx or if we should go to the right by adding 2 bits to di
+                                    cmp di,l2;
+                                    je  bottom;
+                                    cmp bx,0;
+                                    je right;
+                                    bottom:add bx,max;
+                                           jmp endZigZag;
                                     right: inc di;
                                            inc di;
                                     jmp endZigZag;
-                         
+                           
+                           ;With this block we make the diagonal movement upwards
                            change2: sub bx,max;
                                     inc di;
                                     inc di  
-                           
+                 
+                 ;comparison to know if the loop should continue or not          
                  endZigZag: mov ax,cant;
                             cmp ax,l3;
                             jb whileZigZag;
@@ -280,8 +295,10 @@
     jmp end_program
     
 ;----------------------------Code of Printing--------------------------------------
+;------------------------------MANUEL ANTIAS---------------------------------------
 
-    ;--------------------Separating of the digit----------------------------------- 
+    ;--------------------Separating of the digit-----------------------------------
+     
     
     
     
@@ -324,6 +341,8 @@
              ret                         ;We put a return in the code to call it in different instances
              
 ;----------------------------Delay of program----------------------------- -------------------------------------
+;------------------------------MANUEL ANTIAS--------------------------------------------------------------------
+
        
     ;Here we define a delay of 1,000,000 microseconds (1 second) (0F4240h in hexadecimal)
        
