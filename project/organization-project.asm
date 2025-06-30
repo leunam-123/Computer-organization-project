@@ -39,7 +39,9 @@
     
     zigzag_message  db 'Zigzag matrix printing:$'  
     
-    jump_line   db 0Dh, 0Ah, '$'                    
+    jump_line   db 0Dh, 0Ah, '$' 
+    
+    beep        db 07h,'$'                   
     
     end_message db 'Thanks for you use the program!$' 
     
@@ -78,9 +80,13 @@
 ;----------------Moving and Printing Matrix by Rows--------------
 ;-------------------------SOFIA MORENO---------------------------
     
-    mov ah, 09h          ;Load the function to print characters
-    lea dx, row_message
+    mov ah, 09h          ;Load the function to print characters.
+    lea dx, beep         ;we active a beep sound in the system.
     int 21h              ;Call DOS interrupt to print the string.
+    
+    mov ah, 09h          
+    lea dx, row_message
+    int 21h              
       
     mov ah, 09h
     lea dx, jump_line
@@ -99,7 +105,7 @@
            mov x,bx; Save current position
            mov y,di;  
            
-           call printing; 
+           call printing;
            
            mov bx,x; Restore position
            mov di,y;
@@ -122,7 +128,10 @@
                               
 ;----------------Movement and Printing of Matrix by Columns------
 ;------------------------------GRECIA LOPEZ-------------------
-           
+    mov ah, 09h
+    lea dx, beep
+    int 21h 
+                  
     mov ah, 09h
     lea dx, jump_line
     int 21h
@@ -178,6 +187,10 @@
 
 ;----------------Zigzag Matrix Movement and Printing----------------------------
 ;------------------------------SOFIA MORENO & MANUEL ANTIAS---------------------
+    mov ah, 09h
+    lea dx, beep
+    int 21h  
+     
     mov ah, 09h
     lea dx, jump_line
     int 21h
@@ -321,7 +334,7 @@
              lea di,buffer               ;Loads the address (offset) of `buffer` into DI.
                                 
              ascci_cycle:pop dx          ;We take a digit from the stack (LIFO).
-                         add dl,'0'      ;We convert the number to its ASCII character.
+                         add dl,30h      ;We convert the number to its ASCII character.
                          mov [di], dl    ;We move the resulting ASCII character to the buffer at position di. 
                          inc di          ;Incrementa DI para apuntar a la siguiente posicion libre en el buffer. 
                 
@@ -348,11 +361,9 @@
        
     delay:mov cx, 0Fh                    ;We save the high part of the time in hexadecimal.
           mov dx, 4240h                  ;We save the lower part of the time in hexadecimal.
-          mov ah, 86h                    ;This instruction expects a time value in microseconds.
+          mov ah, 86h                    ;We load service number 86h into AH, which is the BIOS delay function.
           int 15h                        ;This is the instruction that triggers the BIOS function call.
-          
-          mov dx,0
-          mov ax,0                       
+                             
           ret                            ;We put a return in the code to call it in different instances           
 
    
@@ -361,7 +372,11 @@
     end_program:mov ah, 09h
                 lea dx, jump_line
                 int 21h
-       
+                            
+                mov ah, 09h
+                lea dx, beep
+                int 21h            
+                            
                 mov ah, 09h
                 lea dx, press_message    ;Message waiting for keyboard input
                 int 21h
@@ -375,7 +390,11 @@
                
                 mov ah, 09h
                 lea dx, jump_line
-                int 21h
+                int 21h 
+                
+                mov ah, 09h
+                lea dx, beep
+                int 21h 
    
                 mov ah, 09h
                 lea dx, end_message
